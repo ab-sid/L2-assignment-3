@@ -1,4 +1,4 @@
-import express, { Request, Response } from "express";
+import express, { NextFunction, Request, Response } from "express";
 import { Book } from "../model/book.model";
 import { Borrow } from "../model/borrow.model";
 
@@ -44,21 +44,27 @@ borrowRouter.get("/", async (req: Request, res: Response) => {
   }
 });
 
-borrowRouter.post("/", async (req: Request, res: Response) => {
-  console.log(req.body);
-  const book = await Book.findById(req.body.book);
-  if (!book) throw new Error("Book not found");
-  if (book.copies < req.body.quantity)
-    throw new Error("Not enough copies available");
-  book.copies -= req.body.quantity;
-  book.updateAvailability();
-  console.log(book.available);
-  await book.save();
-  const borrow = await Borrow.create(req.body);
 
-  res.status(201).json({
-    success: true,
-    message: "Book borrowed successfully",
-    data: borrow,
-  });
+borrowRouter.post("/", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const book = await Book.findById(req.body.book);
+    if (!book) throw new Error("Book not found");
+
+    if (book.copies < req.body.quantity)
+      throw new Error("Not enough copies available");
+
+    book.copies -= req.body.quantity;
+    book.updateAvailability();
+    await book.save();
+
+    const borrow = await Borrow.create(req.body);
+
+    res.status(201).json({
+      success: true,
+      message: "Book borrowed successfully",
+      data: borrow,
+    });
+  } catch (err) {
+    next(err); 
+  }
 });

@@ -10,10 +10,11 @@ app.use(express.json())
 app.use('/api/books', bookRouter)
 app.use('/api/borrow', borrowRouter)
 
-app.get('/', (req:Request, res:Response) => {
-  res.send('Hello World!')
-})
 
+app.get('/', (req:Request, res:Response) => {
+  res.json({message:'Welcome to Library Management System!'})
+})
 app.use(errorHandler);
+
 
 export default app;
